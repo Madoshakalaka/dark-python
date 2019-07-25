@@ -1,38 +1,47 @@
+import io
 import os
 import sys
 import select
+import tempfile
 import termios
+import time
 import tty
 import pty
+import argparse
+from os.path import realpath, dirname
 from subprocess import Popen
+from typing import Tuple
 
-command = 'python'
-# command = 'docker run -it --rm centos /bin/bash'.split()
 
-# save original tty setting then set it to raw mode
-old_tty = termios.tcgetattr(sys.stdin)
-tty.setraw(sys.stdin.fileno())
+def _recognize_file(argv) -> Tuple[str, int]:
+    i = 1
+    for arg in argv:
+        if '-' not in argv:
+            if not arg.endswith('.py'):
+                arg += '.py'
+            return arg, i
+        i += 1
 
-# open pseudo-terminal to interact with subprocess
-master_fd, slave_fd = pty.openpty()
 
-# use os.setsid() make it run in a new process group, or bash job control will not be enabled
-p = Popen(command,
-          preexec_fn=os.setsid,
-          stdin=slave_fd,
-          stdout=slave_fd,
-          stderr=slave_fd,
-          universal_newlines=True)
+def cmd():
+    file, ind = _recognize_file(sys.argv[1:])
 
-while p.poll() is None:
-    r, w, e = select.select([sys.stdin, master_fd], [], [])
-    if sys.stdin in r:
-        d = os.read(sys.stdin.fileno(), 10240)
-        os.write(master_fd, d)
-    elif master_fd in r:
-        o = os.read(master_fd, 10240)
-        if o:
-            os.write(sys.stdout.fileno(), o)
+    with open(file) as script_file:
+        script = script_file.read()
 
-# restore tty settings back
-termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_tty)
+    print(script)
+
+    with open('/home/matt/PycharmProjects/dark-python/dpython/default_config.py') as config_file:
+        config_script = config_file.read()
+
+    with tempfile.NamedTemporaryFile(mode='r+', suffix='.py', dir=dirname(realpath(file))) as fake_script_file:
+        fake_script_file.write(config_script + '\n')
+        fake_script_file.write(script)
+        fake_script_file.seek(0)
+        sys.argv[ind] = fake_script_file.name
+        command = ['python3'] + sys.argv[1:]
+        print(command)
+
+
+        p = Popen(command)
+        p.wait()
