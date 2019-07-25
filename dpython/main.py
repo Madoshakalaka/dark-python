@@ -1,17 +1,12 @@
-import io
+import glob
 import os
 import sys
-import select
 import tempfile
-import termios
-import time
-import tty
-import pty
-import argparse
 from os import path
 from os.path import realpath, dirname, isfile, isdir
+from pathlib import Path
 from subprocess import Popen
-from typing import Tuple
+from typing import Tuple, Union
 
 
 def _recognize_file(argv) -> Tuple[str, int]:
@@ -38,62 +33,99 @@ def _recognize_file(argv) -> Tuple[str, int]:
     raise Exception("can't locate entry script")
 
 
+def _dir_is_package(directory: Union[Path, str]):
+    return isfile(path.join(directory, '__init__.py'))
+
+
 def cmd():
-    parser = argparse.ArgumentParser()
+    args = sys.argv[1:]
 
-    parser.add_argument('args',
-                        help='Provide `dpython config path/to/startup.py` to load startup script, otherwise the same as python command line. try  `dpython -- blahblah` if your blahblah contains dashed flags, e.g. `dpython -- -m folder`',
-                        nargs='*')
+    if len(args) == 1 and args[0] in ['-h', '--help']:
+        print("""
+To configure startup scripts, custom packages:
+usage: dpython [-h]
+       {config}
+       {clear-script,clear-package,inspect-script,inspect-package}
 
-    args = parser.parse_args().args
+Otherwise, just use dpython as python command line, 'python3 -h' to see help for example
+""")
+        return
 
-    print(args)
     if len(args) >= 2:
 
         if args[0] == 'config':
 
             thing = args[1]
 
-            assert thing, 'please provide a command: `clear-script`|`clear-package`|`inspect-script`|`inspect-package` python script or package folder'
-
             if thing == 'clear-script':
-                pass
+                with open(path.join(dirname(__file__), 'config.py'), 'w') as _:
+                    pass
+                print('start up script cleared')
+                return
             elif thing == 'clear-package':
-                pass
+                priority_dir = path.join(dirname(__file__), 'priority_packages')
+                for i in glob.glob(path.join(priority_dir, '*')):
+                    print(path.split(i)[-1], 'removed')
+                    os.unlink(i)
+                return
             elif thing == 'inspect-script':
-                with open(path.join(dirname(__file__), 'config.py'), 'r') as config_cache_file:
+                script_path = path.join(dirname(__file__), 'config.py')
+                if not isfile(script_path):
+                    print('')
+                    return
+
+                with open(script_path, 'r') as config_cache_file:
                     print(config_cache_file.read())
                 return
             elif thing == 'inspect-package':
-                pass
-            else:
-
-                with open(thing) as new_config_file:
-                    config_script = new_config_file.read() + '\n'
-                with open(path.join(dirname(__file__), 'config.py'), 'w') as config_cache_file:
-                    config_cache_file.write(config_script)
-
-                print('new startup script configured')
+                print('patch packages:')
+                priority_dir = path.join(dirname(__file__), 'priority_packages')
+                for i in glob.glob(path.join(priority_dir, '*')):
+                    print(path.split(i)[-1])
                 return
+            else:
+                if isfile(thing):
+                    with open(thing) as new_config_file:
+                        config_script = new_config_file.read() + '\n'
+                    with open(path.join(dirname(__file__), 'config.py'), 'w') as config_cache_file:
+                        config_cache_file.write(config_script)
+
+                    print('new startup script configured')
+                    return
+                elif isdir(thing):
+
+                    if _dir_is_package(thing):
+
+                        priority_dir = path.join(dirname(__file__), 'priority_packages')
+                        if not isdir(priority_dir):
+                            os.mkdir(priority_dir)
+
+                        os.symlink(path.realpath(thing), path.join(priority_dir, path.split(thing)[-1]),
+                                   target_is_directory=True)
+
+                        print("patch package configured")
+                        return
+
+                raise Exception('neither python file nor python package is provided')
 
     with open(path.join(dirname(__file__), 'config.py'), 'r') as config_cache_file:
         config_script = config_cache_file.read()
 
     if not args:  # interactive shell
         with tempfile.NamedTemporaryFile(mode='r+', suffix='.py', dir='.') as fake_script_file:
+            fake_script_file.write(
+                "import sys\nsys.path.insert(0, '%s')\n" % path.join(dirname(__file__), 'priority_packages'))
+
             fake_script_file.write(config_script)
             fake_script_file.seek(0)
-            command = ['python3', '-i', fake_script_file.name]
+            command = [sys.executable, '-i', fake_script_file.name]
             print(command)
 
             p = Popen(command)
             p.wait()
     else:
-        # todo: read idioms and be less cringy
-        if sys.argv[1] == '--':
-            file, ind = _recognize_file(sys.argv[2:])
-        else:
-            file, ind = _recognize_file(sys.argv[1:])
+
+        file, ind = _recognize_file(sys.argv[1:])
 
         # fool proof
         if file.endswith('config.py') and not isfile(file):
@@ -105,12 +137,16 @@ def cmd():
         # print(script)
 
         with tempfile.NamedTemporaryFile(mode='r+', suffix='.py', dir=dirname(realpath(file))) as fake_script_file:
+            fake_script_file.write(
+                "import sys\nsys.path.insert(0, '%s')\n" % path.join(dirname(__file__), 'priority_packages'))
             fake_script_file.write(config_script + '\n')
             fake_script_file.write(script)
             fake_script_file.seek(0)
-            sys.argv[ind] = fake_script_file.name
-            command = ['python3'] + sys.argv[1:]
-            print(command)
+            if '-m' in sys.argv or '--module' in sys.argv:
+                pass
+            else:
+                sys.argv[ind] = fake_script_file.name
+            command = [sys.executable] + sys.argv[1:]
 
             p = Popen(command)
             p.wait()

@@ -1,7 +1,7 @@
 # Dark Python
 ![travis-badge](https://travis-ci.org/Madoshakalaka/dark-python.svg?branch=master)
 
-Modify python built-in functions and libraries
+Patch python built-in functions and libraries!
 
 ## How to Use
 

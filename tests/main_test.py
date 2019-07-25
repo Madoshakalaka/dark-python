@@ -1,10 +1,5 @@
 import os
-import subprocess
-import sys
 import unittest
-from os import path
-
-from gapp import main
 
 
 class MyTestCase(unittest.TestCase):
@@ -15,7 +10,7 @@ class MyTestCase(unittest.TestCase):
         os.chdir(os.path.dirname(__file__))
 
     def test_stuff(self):
-        pass
+        assert bool("my code is perfect") is True
 
 
     def tearDown(self) -> None:

@@ -1,0 +1,2 @@
+exclude dpython/priority_packages
+exclude dpython/config.py
