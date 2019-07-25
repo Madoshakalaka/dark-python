@@ -26,7 +26,15 @@ def _recognize_file(argv) -> Tuple[str, int]:
 def cmd():
     parser = argparse.ArgumentParser()
 
+    subparsers = parser.add_subparsers(help="sub-command help")
+
+    parser_a = subparsers.add_parser('config', help="configure startup script")
+    parser_a.add_argument('filepath', help='the start up python script you want to load')
+
     parser.add_argument('args', help='the same as python', nargs='+')
+
+    args = parser.parse_args()
+
 
     file, ind = _recognize_file(sys.argv[1:])
 
