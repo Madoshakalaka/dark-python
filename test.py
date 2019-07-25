@@ -1,1 +1,4 @@
-print('2')
+oldprint = print
+
+def print(x):
+    oldprint(x+1)
