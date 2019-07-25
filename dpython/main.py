@@ -52,8 +52,8 @@ Otherwise, just use dpython as python command line, 'python3 -h' to see help for
         return
     script_path = path.join(dirname(__file__), 'config.py')
     if not isfile(script_path):
-        print('')
-        return
+        with open(script_path, 'w') as _:
+            pass
 
     if len(args) >= 2:
 
