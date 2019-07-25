@@ -123,7 +123,7 @@ Otherwise, just use dpython as python command line, 'python3 -h' to see help for
             fake_script_file.write(config_script)
             fake_script_file.seek(0)
             command = [sys.executable, '-i', fake_script_file.name]
-            print(command)
+            # print(command)
 
             p = Popen(command)
             p.wait()
