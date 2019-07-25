@@ -1,0 +1,22 @@
+language: python
+dist: xenial
+install: pip install -e .
+script:
+- pytest
+stages:
+- test
+- deploy
+jobs:
+  include:
+  - python: '3.7'
+  - python: '3.6'
+  - stage: deploy
+    install: ''
+    script: ''
+    deploy:
+      provider: pypi
+      user: Madoshakalaka
+      password:
+        secure: HOaONPxVAbhiILB9rpJHiZpDVOVrFzfKT3J5RkKQVBkYQ4cj/1KuWJmau8ghNZkVcP10eQ3lK9yHU9G7OHlnFQOZVQm49PZUgp9fx751cEb9jRyu1HDREdWoSUDGA2IOvNL11hzx0hAmJmlRuzljPrCtnxXxA2XgOSf+Es97l3t+2f1pB6awBcsSsLxwZhdQapeXIH1Sw7IcqirKKRy5PWfch/ozVBFFh0uxsSnNGV+u9siozll0cv9cpaYxYtueHpGVK0RyPovFueh9hbNKhEGD8kHKd4VSeHXdewFXlYdUE6G1l+rRGJTbqRZZpxksZESd7YKs9ZbYTkoLZmpPuU+mDc6LvYBgkc6l/SntYJ/CDKFXqpDRZg8nZONgz8wplAIDjsHf+IC4cWSpl4lWrPDirhZhoM4aGFkwaphJVdUrOd/GyBUSF5ye8ffjUXRPb2uYtP1ewWnfCYSIRr0Xi0UdrydZnX4IBiEWwL11oSaz2MjQhlR4Eg8rEJH04qhs/PImXzjszYUwpB4hfV/Zht9GaT1Q4/pWKC4+ARWJpi58SbHoAzIeBMDi+vk7EedY4Qr8v2/AdN9xvfmjY9IEW2vvqjzkz1gvVhiCa3BPV4DYIZzUy79rB0BtG96J61lfzUMzolkveKJKFn6x1GkS1hc8SEAKGDZphS49w1LZPp0=
+      on:
+        tags: true
