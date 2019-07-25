@@ -24,6 +24,10 @@ def _recognize_file(argv) -> Tuple[str, int]:
 
 
 def cmd():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('args', help='the same as python', nargs='+')
+
     file, ind = _recognize_file(sys.argv[1:])
 
     with open(file) as script_file:
