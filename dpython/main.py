@@ -50,6 +50,10 @@ usage: dpython [-h]
 Otherwise, just use dpython as python command line, 'python3 -h' to see help for example
 """)
         return
+    script_path = path.join(dirname(__file__), 'config.py')
+    if not isfile(script_path):
+        print('')
+        return
 
     if len(args) >= 2:
 

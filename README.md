@@ -71,13 +71,59 @@ dpython only has one reserved sub-command which is different from python: `'conf
 - You can register as many as packages as you like. But only one `.py` startup script.
 
 
-`$ dpython config inspect-script`
+`$ dpython config inspect-script` Print the saved startup script
+
+`$ dpython config clear-script` Reset the saved startup script
+
+`$ dpython config inspect-package` Print registered packages
+
+```shell
+# example output
+patch packages:
+random
+numpy
+argparse
+```
+
+`$ dpython config clear-package` Clear registered packages, won't delete real file.
+```shell
+# example output
+random removed
+numpy removed
+argparse removed
+```
+`$ dpython -h|--help` to print help
+
+## More Examples
+
+- example 1
+
+    ```python
+    # leEtH4ck3r.py
+    oldprint = print
+    def print(*args, **kwargs):
+        oldprint('Pwned  by Dark Python!!!')
+        oldprint(*args, **kwargs)
+    ```
+    `$ dpython register leEtH4ck3r.py`
+
+- example 2
+
+    ```python
+    # ilovetqdm.py
+    from tqdm import trange
+    range = trange
+    ```
+    `$ dpython register ilovetqdm.py`
 
 
-<!--
-![start_end_app](https://raw.githubusercontent.com/Madoshakalaka/gapp/master/readme_assets/start_end_app.PNG)
--->
 
-<!--You picture won't show on pypi if you use relative path.-->
-<!--If you want to add any image, please add the image to readme_assets folder and add the filename as below-->
-<!--![some show case picture](https://raw.githubusercontent.com/Madoshakalaka/gapp/master/readme_assets/showcasePicture.png)-->
+## My Stupid Fantasies (todos)
+
+- Write a package called `gwrap` that internally uses `dpython` to extend built-in `argparse`.
+    
+    `$ gwrap any_cmd_utility.py`
+
+    As long as the script uses `argparse`, gwrap will create a GUI, with check boxes replacing boolean arguments. Drop down menus replacing argument choices. Hovering tooltips for argument help. And store command history for autocompletion.
+
+- Install `dpython` on my coworkers computer, screw up the most usual functions like `range()`, `list()`. Alias python=dpython just for fun.
